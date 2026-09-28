@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>aespa Official Fan Chant Prompter</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 15px rgba(168, 85, 247, 0.4); }
+      50% { box-shadow: 0 0 35px rgba(236, 72, 153, 0.8); }
+    }
+    .ae-glow { animation: pulseGlow 3s infinite ease-in-out; }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans">
+
+  <!-- Header -->
+  <header class="border-b border-purple-900/50 bg-slate-900/80 backdrop-blur sticky top-0 z-50 px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center space-x-2">
+      <i data-lucide="sparkles" class="w-6 h-6 text-purple-400"></i>
+      <h1 class="text-xl font-bold bg-gradient-to-r from-purple-400 via-fuchsia-400 to-cyan-400 bg-clip-text text-transparent">
+        æ-PROMPTER
+      </h1>
+    </div>
+    <div id="statusBadge" class="text-xs px-2.5 py-1 rounded-full bg-purple-950 border border-purple-600 text-purple-300 flex items-center gap-1.5">
+      <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Ready
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="flex-1 max-w-md w-full mx-auto p-4 flex flex-col justify-between space-y-4">
+    
+    <!-- Song Selector -->
+    <div class="bg-slate-900 border border-slate-800 rounded-xl p-3 shadow-lg">
+      <label class="text-xs font-semibold text-purple-400 tracking-wider uppercase block mb-1.5">Select Track</label>
+      <select id="songSelect" onchange="changeSong()" class="w-full bg-slate-950 border border-purple-800/60 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-purple-500">
+        <option value="whiplash">Whiplash</option>
+        <option value="armageddon">Armageddon</option>
+        <option value="supernova">Supernova</option>
+        <option value="drama">Drama</option>
+        <option value="nextlevel">Next Level</option>
+        <option value="savage">Savage</option>
+      </select>
+    </div>
+
+    <!-- Active Chant Banner Display -->
+    <div class="bg-slate-900/90 border-2 border-purple-500 rounded-2xl p-6 text-center shadow-2xl relative overflow-hidden ae-glow min-h-[220px] flex flex-col justify-center items-center">
+      <div id="sectionBadge" class="absolute top-3 left-3 text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded bg-purple-950 text-purple-300 border border-purple-700">
+        Intro
+      </div>
+      <div id="timeCounter" class="absolute top-3 right-3 text-xs font-mono text-slate-400">
+        00:00
+      </div>
+
+      <p id="cueContext" class="text-xs text-slate-400 mb-2 italic">
+        "Get ready..."
+      </p>
+
+      <div id="chantPrompt" class="text-2xl font-black text-fuchsia-300 tracking-wide leading-tight uppercase drop-shadow-[0_2px_10px_rgba(236,72,153,0.5)]">
+        KARINA! GISELLE! WINTER! NINGNING! aespa!
+      </div>
+
+      <div id="nextPreview" class="mt-4 text-xs text-slate-400 border-t border-slate-800 pt-3 w-full">
+        <span class="text-purple-400 font-semibold">NEXT:</span> <span id="nextText">WHIPLASH!</span>
+      </div>
+    </div>
+
+    <!-- Audio Mic Spectrum Visualizer -->
+    <div class="bg-slate-900 border border-slate-800 rounded-xl p-3">
+      <div class="flex justify-between items-center text-xs text-slate-400 mb-2">
+        <span class="flex items-center gap-1"><i data-lucide="mic" class="w-3.5 h-3.5 text-cyan-400"></i> Mic Beat Sync</span>
+        <span id="bpmDisplay" class="font-mono text-cyan-300">126 BPM</span>
+      </div>
+      <div id="spectrumBars" class="flex items-end justify-between h-10 gap-1 px-1">
+        <!-- Bars generated via JS -->
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col gap-3">
+      <div class="flex items-center justify-between gap-2">
+        <button onclick="toggleMic()" id="micBtn" class="flex-1 bg-cyan-900/40 border border-cyan-500/50 hover:bg-cyan-900/60 text-cyan-200 py-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition">
+          <i data-lucide="mic" class="w-4 h-4"></i> Start Mic Sync
+        </button>
+        <button onclick="togglePlay()" id="playBtn" class="flex-1 bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-500 hover:to-fuchsia-500 text-white py-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition shadow-lg">
+          <i data-lucide="play" class="w-4 h-4"></i> Practice Mode
+        </button>
+      </div>
+
+      <div class="flex justify-between items-center text-xs text-slate-400 pt-1">
+        <span>Playback Speed:</span>
+        <div class="flex gap-1">
+          <button onclick="setSpeed(0.75)" class="px-2 py-1 rounded bg-slate-800 hover:bg-purple-900 text-slate-300 text-[11px]">0.75x</button>
+          <button onclick="setSpeed(1.0)" class="px-2 py-1 rounded bg-purple-700 text-white font-bold text-[11px]">1.0x</button>
+          <button onclick="setSpeed(1.25)" class="px-2 py-1 rounded bg-slate-800 hover:bg-purple-900 text-slate-300 text-[11px]">1.25x</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    lucide.createIcons();
+
+    // Fan Chant Cue Data
+    const songData = {
+      whiplash: {
+        bpm: 126,
+        chants: [
+          { time: 2, section: "Intro", cue: "Beat Intro", shout: "KARINA! GISELLE! WINTER! NINGNING! aespa!", next: "WHIPLASH!" },
+          { time: 10, section: "Verse 1", cue: "Beat drop", shout: "WHIPLASH!", next: "Deliver line cue" },
+          { time: 18, section: "Chorus", cue: "Synth chorus drop", shout: "ONE, TWO, WHIPLASH!", next: "aespa!" },
+          { time: 30, section: "Bridge", cue: "Bridge build-up", shout: "A-E-S-P-A! WHIPLASH!", next: "Outro shout" }
+        ]
+      },
+      supernova: {
+        bpm: 128,
+        chants: [
+          { time: 2, section: "Intro", cue: "Opening synth", shout: "SU-SU-SU-SUPERNOVA!", next: "Member names" },
+          { time: 8, section: "Verse 1", cue: "Heavy bass beat", shout: "KARINA! GISELLE! WINTER! NINGNING!", next: "HYPERNOVA!" },
+          { time: 20, section: "Chorus", cue: "Chorus peak", shout: "CAN'T STOP GOING HIGHER!", next: "SUPERNOVA!" }
+        ]
+      },
+      armageddon: {
+        bpm: 115,
+        chants: [
+          { time: 3, section: "Intro", cue: "Heavy kick drum", shout: "ARMAGEDDON! AESPA!", next: "Bang Bang" },
+          { time: 15, section: "Verse 1", cue: "Whisper line cue", shout: "BANG BANG! ARMAGEDDON!", next: "Chorus chant" }
+        ]
+      },
+      drama: {
+        bpm: 124,
+        chants: [
+          { time: 2, section: "Intro", cue: "Drama bassline", shout: "KARINA! GISELLE! WINTER! NINGNING! DRAMA!", next: "Outta my way" },
+          { time: 14, section: "Chorus", cue: "Main chorus", shout: "D-D-D-DRAMA!", next: "Bring it on" }
+        ]
+      },
+      nextlevel: {
+        bpm: 109,
+        chants: [
+          { time: 2, section: "Intro", cue: "Intro synth", shout: "NEXT LEVEL! AESPA!", next: "Gwangya call" },
+          { time: 16, section: "Chorus", cue: "Arm motion cue", shout: "I'M ON THE NEXT LEVEL!", next: "Beat change" }
+        ]
+      },
+      savage: {
+        bpm: 147,
+        chants: [
+          { time: 2, section: "Intro", cue: "Oh my gosh", shout: "KARINA! GISELLE! WINTER! NINGNING! SAVAGE!", next: "ZuZuZu" },
+          { time: 12, section: "Verse 1", cue: "Gwangya entrance", shout: "MY KARINA! MY GISELLE! MY WINTER! MY NINGNING!", next: "Gimme gimme now" }
+        ]
+      }
+    };
+
+    let currentSong = "whiplash";
+    let isPlaying = false;
+    let isMicActive = false;
+    let timer = null;
+    let seconds = 0;
+    let currentChantIndex = 0;
+    let audioCtx = null;
+    let analyser = null;
+    let micStream = null;
+
+    // Spectrum bars generator
+    const spectrumContainer = document.getElementById('spectrumBars');
+    for (let i = 0; i < 20; i++) {
+      const bar = document.createElement('div');
+      bar.className = 'w-full bg-purple-600/40 rounded-t transition-all duration-100';
+      bar.style.height = '15%';
+      spectrumContainer.appendChild(bar);
+    }
+
+    function changeSong() {
+      currentSong = document.getElementById('songSelect').value;
+      seconds = 0;
+      currentChantIndex = 0;
+      updateDisplay();
+    }
+
+    function updateDisplay() {
+      const track = songData[currentSong] || songData.whiplash;
+      document.getElementById('bpmDisplay').innerText = `${track.bpm} BPM`;
+      const chant = track.chants[currentChantIndex] || track.chants[0];
+      
+      document.getElementById('sectionBadge').innerText = chant.section;
+      document.getElementById('cueContext').innerText = `"${chant.cue}"`;
+      document.getElementById('chantPrompt').innerText = chant.shout;
+      document.getElementById('nextText').innerText = chant.next;
+
+      const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
+      const secs = (seconds % 60).toString().padStart(2, '0');
+      document.getElementById('timeCounter').innerText = `${mins}:${secs}`;
+    }
+
+    function togglePlay() {
+      isPlaying = !isPlaying;
+      const playBtn = document.getElementById('playBtn');
+      if (isPlaying) {
+        playBtn.innerHTML = `<i data-lucide="pause" class="w-4 h-4"></i> Pause Practice`;
+        timer = setInterval(() => {
+          seconds++;
+          const track = songData[currentSong];
+          if (track.chants[currentChantIndex + 1] && seconds >= track.chants[currentChantIndex + 1].time) {
+            currentChantIndex++;
+          }
+          updateDisplay();
+          if (!isMicActive) animateSimulatedSpectrum();
+        }, 1000);
+      } else {
+        playBtn.innerHTML = `<i data-lucide="play" class="w-4 h-4"></i> Practice Mode`;
+        clearInterval(timer);
+      }
+      lucide.createIcons();
+    }
+
+    async function toggleMic() {
+      const micBtn = document.getElementById('micBtn');
+      const badge = document.getElementById('statusBadge');
+
+      if (!isMicActive) {
+        try {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          if (audioCtx.state === 'suspended') {
+            await audioCtx.resume();
+          }
+
+          micStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+          const source = audioCtx.createMediaStreamSource(micStream);
+          analyser = audioCtx.createAnalyser();
+          analyser.fftSize = 64;
+          source.connect(analyser);
+
+          isMicActive = true;
+          micBtn.className = "flex-1 bg-cyan-500 border border-cyan-400 text-slate-950 py-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition";
+          micBtn.innerHTML = `<i data-lucide="mic-off" class="w-4 h-4"></i> Stop Mic Sync`;
+          badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span> Mic Active`;
+          
+          listenToMic();
+        } catch (err) {
+          alert("Microphone Permission Required: Open this app over HTTPS or grant Safari microphone access in iOS Settings.");
+        }
+      } else {
+        if (micStream) micStream.getTracks().forEach(track => track.stop());
+        isMicActive = false;
+        micBtn.className = "flex-1 bg-cyan-900/40 border border-cyan-500/50 hover:bg-cyan-900/60 text-cyan-200 py-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition";
+        micBtn.innerHTML = `<i data-lucide="mic" class="w-4 h-4"></i> Start Mic Sync`;
+        badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Ready`;
+      }
+      lucide.createIcons();
+    }
+
+    function listenToMic() {
+      if (!isMicActive || !analyser) return;
+      const dataArray = new Uint8Array(analyser.frequencyBinCount);
+      analyser.getByteFrequencyData(dataArray);
+
+      const bars = spectrumContainer.children;
+      for (let i = 0; i < bars.length; i++) {
+        const val = dataArray[i] || 0;
+        bars[i].style.height = `${Math.max(15, (val / 255) * 100)}%`;
+      }
+      requestAnimationFrame(listenToMic);
+    }
+
+    function animateSimulatedSpectrum() {
+      const bars = spectrumContainer.children;
+      for (let bar of bars) {
+        const height = Math.floor(Math.random() * 80) + 20;
+        bar.style.height = `${height}%`;
+      }
+    }
+
+    function setSpeed(spd) {
+      alert(`Practice speed updated to ${spd}x`);
+    }
+
+    updateDisplay();
+  </script>
+</body>
+</html>
